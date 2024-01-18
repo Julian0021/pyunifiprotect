@@ -442,10 +442,12 @@ def set_auto_track(ctx: typer.Context, enabled: bool) -> None:
 
     base.require_device_id(ctx)
     obj: d.Camera = ctx.obj.device
+    
+    if not obj.feature_flags.is_ptz:
+        typer.secho("Camera does not support auto tracking", fg="red")
+        raise typer.Exit(1)
 
-    data_before_changes = obj.dict_with_excludes()
-    obj.smart_detect_settings.auto_tracking_object_types = [d.SmartDetectObjectType.PERSON] if enabled else []
-    base.run(ctx, obj.save_device(data_before_changes))
+    base.run(ctx, (obj.set_auto_track(enabled=enabled)))
 
 @app.command()
 def set_video_mode(ctx: typer.Context, mode: d.VideoMode) -> None:
