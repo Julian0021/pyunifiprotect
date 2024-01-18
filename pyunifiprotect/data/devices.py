@@ -452,6 +452,10 @@ class SmartDetectSettings(ProtectBaseObject):
             data["objectTypes"] = convert_smart_types(data.pop("objectTypes"))
         if "audioTypes" in data:
             data["audioTypes"] = convert_smart_audio_types(data.pop("audioTypes"))
+        if "autoTrackingObjectTypes" in data:
+            data["autoTrackingObjectTypes"] = convert_smart_types(
+                data.pop("autoTrackingObjectTypes"),
+            )
 
         return super().unifi_dict_to_dict(data)
 
@@ -1207,6 +1211,13 @@ class Camera(ProtectMotionDeviceModel):
         """Toggles person smart detection. Requires camera to have smart detection"""
 
         return await self._set_object_detect(SmartDetectObjectType.PERSON, enabled)
+    
+    @property
+    def is_auto_tracking_on(self) -> bool:
+        return (
+            self.is_recording_enabled
+            and SmartDetectObjectType.PERSON in self.smart_detect_settings.auto_tracking_object_types
+        )
 
     # vehicle
 
