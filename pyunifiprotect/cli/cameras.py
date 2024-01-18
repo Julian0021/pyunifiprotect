@@ -436,6 +436,16 @@ def set_color_night_vision(ctx: typer.Context, enabled: bool) -> None:
 
     base.run(ctx, obj.set_color_night_vision(enabled=enabled))
 
+@app.command()
+def set_auto_track(ctx: typer.Context, enabled: bool) -> None:
+    """Sets Auto Track on camera"""
+
+    base.require_device_id(ctx)
+    obj: d.Camera = ctx.obj.device
+
+    data_before_changes = obj.dict_with_excludes()
+    obj.smart_detect_settings.auto_tracking_object_types = [d.SmartDetectObjectType.PERSON] if enabled else []
+    base.run(ctx, obj.save_device(data_before_changes))
 
 @app.command()
 def set_video_mode(ctx: typer.Context, mode: d.VideoMode) -> None:
