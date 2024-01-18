@@ -2244,14 +2244,13 @@ class Camera(ProtectMotionDeviceModel):
 
         await self.queue_update(callback)
         
-    async def set_auto_track(self, enabled: bool) -> None:
-        """Sets auto tracking on camera"""
+    async def set_person_track(self, enabled: bool) -> None:
+        """Sets person tracking on camera"""
 
         if not self.feature_flags.is_ptz:
-            raise BadRequest("Camera does not support auto tracking")
+            raise BadRequest("Camera does not support person tracking")
         
         def callback() -> None:
-            data_before_changes = self.dict_with_excludes()
             self.smart_detect_settings.auto_tracking_object_types = [SmartDetectObjectType.PERSON] if enabled else []
         
         await self.queue_update(callback)
