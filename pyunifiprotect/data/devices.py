@@ -1211,12 +1211,15 @@ class Camera(ProtectMotionDeviceModel):
         """Toggles person smart detection. Requires camera to have smart detection"""
 
         return await self._set_object_detect(SmartDetectObjectType.PERSON, enabled)
-    
+
     @property
-    def is_auto_tracking_on(self) -> bool:
+    def is_person_tracking_enabled(self) -> bool:
+        """Is person tracking enabled"""
         return (
             self.is_recording_enabled
-            and SmartDetectObjectType.PERSON in self.smart_detect_settings.auto_tracking_object_types
+            and self.smart_detect_settings.auto_tracking_object_types is not None
+            and SmartDetectObjectType.PERSON
+            in self.smart_detect_settings.auto_tracking_object_types
         )
 
     # vehicle
@@ -2243,16 +2246,18 @@ class Camera(ProtectMotionDeviceModel):
                 self.recording_settings.mode = recording_mode
 
         await self.queue_update(callback)
-        
+
     async def set_person_track(self, enabled: bool) -> None:
         """Sets person tracking on camera"""
 
         if not self.feature_flags.is_ptz:
             raise BadRequest("Camera does not support person tracking")
-        
+
         def callback() -> None:
-            self.smart_detect_settings.auto_tracking_object_types = [SmartDetectObjectType.PERSON] if enabled else []
-        
+            self.smart_detect_settings.auto_tracking_object_types = (
+                [SmartDetectObjectType.PERSON] if enabled else []
+            )
+
         await self.queue_update(callback)
 
     def create_talkback_stream(
