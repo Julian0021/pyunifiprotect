@@ -1098,6 +1098,16 @@ class Camera(ProtectMotionDeviceModel):
 
         return self.api.bootstrap.events.get(event_id)
 
+    async def get_ptz_presets(self) -> list[dict[str, Any]]:
+        """Get the PTZ presets for the camera."""
+        result = await self.api.api_request(f"cameras/{self.id}/ptz/preset")
+        
+        # Assuming result is a list of dictionaries or None
+        if result is not None and isinstance(result, list) and all(isinstance(item, dict) for item in result):
+            return result
+        else:
+            return []
+
     @property
     def timelapse_url(self) -> str:
         return f"{self.api.base_url}/protect/timelapse/{self.id}"
@@ -2040,6 +2050,29 @@ class Camera(ProtectMotionDeviceModel):
             self.speaker_settings.volume = PercentInt(level)
 
         await self.queue_update(callback)
+
+    async def goto_preset(self, preset_slot: int) -> None:
+        """Sets the camera to a preset position"""
+
+        if not self.feature_flags.is_ptz:
+            raise BadRequest("Camera does not have PTZ")
+
+        if preset_slot < 0 or preset_slot > 9:
+            raise BadRequest("Preset slot out of bounds")
+
+        presets = await self.get_ptz_presets()
+        if preset_slot not in [item["slot"] for item in presets]:
+            await self.api.close_session()
+            raise BadRequest("Preset slot is empty")
+
+        result = await self.api.api_request(
+            url=f"cameras/{self.id}/ptz/goto/{preset_slot}", method="post"
+        )
+
+        await self.api.close_session()
+
+        if result.get("success") is False:
+            raise BadRequest("Camera could not move to preset")
 
     async def set_chime_type(self, chime_type: ChimeType) -> None:
         """Sets chime type for doorbell. Requires camera to be a doorbell"""
